@@ -1,0 +1,333 @@
+// ───────────────────────────────────────────────────────────────────────
+//  SOCOPAD — Schéma de données Prisma (MVP)
+// ───────────────────────────────────────────────────────────────────────
+//  Objectifs :
+//   • Centraliser stocks de cacao depuis 25 magasins
+//   • Tracer toute action sensible (audit)
+//   • Rester extensible (achats, ventes, qualité, finance à venir)
+//
+//  Conventions :
+//   • Identifiants : cuid() (collision-safe, lisible, ordonné)
+//   • Dates       : @default(now()) + @updatedAt
+//   • Soft delete : champ `actif` Boolean — préserve l'historique
+//   • Auth        : NextAuth v5 en mode JWT (credentials), pas de tables
+//                   Account / Session — on garde juste User
+// ───────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─── ÉNUMÉRATIONS ──────────────────────────────────────────────────────
+
+/// Rôles applicatifs (RBAC)
+enum Role {
+  ADMIN                 // Direction SOCOPAD — accès total
+  MANAGER_REGIONAL      // Pilote plusieurs magasins de sa région
+  RESPONSABLE_MAGASIN   // Saisie + validation sur SON magasin
+  OPERATEUR_SAISIE      // Saisie uniquement (pas de validation)
+}
+
+/// Statut d'un point de vente
+enum StatutMagasin {
+  ACTIF
+  INACTIF
+  MAINTENANCE
+}
+
+/// Type de produit cacao (étape de transformation)
+enum TypeProduit {
+  FEVES_BRUTES
+  FEVES_FERMENTEES
+  FEVES_SECHEES
+}
+
+/// Grade qualité du cacao
+enum GradeProduit {
+  GRADE_1
+  GRADE_2
+  HORS_STANDARD
+}
+
+/// Workflow de validation d'un état journalier de stock
+enum StatutStock {
+  BROUILLON   // En cours de saisie
+  SOUMIS      // Envoyé pour validation
+  VALIDE      // Approuvé par un responsable
+  REJETE      // Refusé (à corriger et resoumettre)
+}
+
+/// Type d'un mouvement de stock granulaire
+enum TypeMouvement {
+  ENTREE_ACHAT          // Achat producteur / coopérative
+  ENTREE_TRANSFERT      // Transfert entrant inter-magasins
+  ENTREE_AJUSTEMENT     // Correction d'inventaire (positive)
+  SORTIE_VENTE          // Vente à client
+  SORTIE_TRANSFERT      // Transfert sortant inter-magasins
+  SORTIE_PERTE          // Perte / casse / contamination
+  SORTIE_ECART          // Écart d'inventaire (négative)
+}
+
+/// Action tracée dans le journal d'audit
+enum ActionAudit {
+  CREATION
+  MODIFICATION
+  SUPPRESSION
+  SOUMISSION
+  VALIDATION
+  REJET
+  CONNEXION
+  DECONNEXION
+  EXPORT
+}
+
+// ─── DOMAINE GÉOGRAPHIQUE ──────────────────────────────────────────────
+
+/// Région administrative (regroupe plusieurs magasins).
+/// Sert pour la portée du MANAGER_REGIONAL et les agrégations.
+model Region {
+  id          String    @id @default(cuid())
+  code        String    @unique                // ex: "SUD", "CENTRE"
+  nom         String                            // ex: "Sud-Ouest"
+  description String?
+  magasins    Magasin[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("regions")
+}
+
+/// Point de vente / magasin SOCOPAD (25 unités au lancement).
+model Magasin {
+  id              String         @id @default(cuid())
+  code            String         @unique         // ex: "MAG-ABJ-01"
+  nom             String                          // ex: "Abidjan Plateau"
+  ville           String
+  adresse         String?
+  latitude        Float?
+  longitude       Float?
+  /// Capacité de stockage maximale en kilogrammes
+  capaciteKg      Float
+  statut          StatutMagasin  @default(ACTIF)
+  telephone       String?
+
+  regionId        String
+  region          Region         @relation(fields: [regionId], references: [id])
+
+  /// Responsable principal du magasin (peut être null si en recrutement)
+  responsableId   String?        @unique
+  responsable     User?          @relation("MagasinResponsable", fields: [responsableId], references: [id])
+
+  /// Tous les utilisateurs affectés (responsable + opérateurs)
+  utilisateurs    User[]         @relation("MagasinAffectations")
+
+  /// États journaliers de stock et mouvements rattachés à ce magasin
+  stocks          Stock[]
+  mouvementsSrc   MouvementStock[] @relation("MouvementSource")
+  mouvementsDest  MouvementStock[] @relation("MouvementDestination")
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([regionId])
+  @@index([statut])
+  @@map("magasins")
+}
+
+// ─── DOMAINE UTILISATEURS / AUTH ───────────────────────────────────────
+
+/// Compte utilisateur applicatif. NextAuth v5 (credentials + JWT) :
+/// pas de tables Account/Session, on garde juste User.
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  /// Hash bcrypt — JAMAIS le mot de passe en clair
+  motDePasseHash  String
+  nom             String
+  prenom          String?
+  telephone       String?
+  role            Role     @default(OPERATEUR_SAISIE)
+  actif           Boolean  @default(true)
+
+  /// Magasin principal de l'utilisateur (responsable / opérateur affecté)
+  magasinId       String?
+  magasin         Magasin? @relation("MagasinAffectations", fields: [magasinId], references: [id])
+
+  /// Magasin dont il est responsable (relation 1-1 inverse — facultatif)
+  magasinResponsable Magasin? @relation("MagasinResponsable")
+
+  /// Région d'attache pour MANAGER_REGIONAL (accès limité à cette zone)
+  regionId        String?
+
+  /// Saisies & validations de stock dont il est l'auteur
+  stocksSaisis    Stock[]            @relation("StockSaisiPar")
+  stocksValides   Stock[]            @relation("StockValidePar")
+  mouvementsSaisis MouvementStock[]  @relation("MouvementSaisiPar")
+
+  /// Journal d'audit (actions de l'utilisateur)
+  auditLogs       AuditLog[]
+
+  derniereConnexion DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([role])
+  @@index([magasinId])
+  @@index([regionId])
+  @@map("users")
+}
+
+// ─── DOMAINE PRODUITS ──────────────────────────────────────────────────
+
+/// Catalogue produits cacao SOCOPAD (croisement type × grade × origine).
+model Produit {
+  id          String           @id @default(cuid())
+  code        String           @unique               // ex: "FS-G1-CI"
+  nom         String                                  // ex: "Fèves séchées Grade 1 Côte d'Ivoire"
+  description String?
+  type        TypeProduit
+  grade       GradeProduit
+  /// Origine / coopérative d'approvisionnement (libre)
+  origine     String?
+  actif       Boolean          @default(true)
+
+  stocks      Stock[]
+  mouvements  MouvementStock[]
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([type])
+  @@index([grade])
+  @@map("produits")
+}
+
+// ─── DOMAINE STOCKS ────────────────────────────────────────────────────
+
+/// État journalier d'un produit dans un magasin.
+/// Une ligne par (magasin, produit, jour) — clé unique composite.
+/// L'historique est préservé en append-only.
+model Stock {
+  id              String      @id @default(cuid())
+
+  magasinId       String
+  magasin         Magasin     @relation(fields: [magasinId], references: [id])
+
+  produitId       String
+  produit         Produit     @relation(fields: [produitId], references: [id])
+
+  /// Date métier (00:00 UTC du jour concerné), pas createdAt
+  date            DateTime
+
+  /// Photo du jour, en kilogrammes
+  stockOuvertureKg Float       @default(0)
+  entreesKg        Float       @default(0)
+  sortiesKg        Float       @default(0)
+  /// Calculé côté serveur = ouverture + entrées - sorties (saisi pour réconciliation)
+  stockClotureKg   Float       @default(0)
+
+  /// Mesures qualité optionnelles
+  humiditeMoyenne  Float?      // pourcentage 0-100
+  notesQualite     String?
+
+  /// Workflow validation
+  statut           StatutStock @default(BROUILLON)
+
+  saisiParId       String
+  saisiPar         User        @relation("StockSaisiPar", fields: [saisiParId], references: [id])
+  saisiLe          DateTime    @default(now())
+
+  valideParId      String?
+  validePar        User?       @relation("StockValidePar", fields: [valideParId], references: [id])
+  valideLe         DateTime?
+
+  motifRejet       String?
+
+  /// Mouvements granulaires composant cette journée
+  mouvements       MouvementStock[]
+
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  /// Pas plus d'une fiche journalière par (magasin × produit × jour)
+  @@unique([magasinId, produitId, date])
+  @@index([date])
+  @@index([statut])
+  @@index([magasinId, date])
+  @@map("stocks")
+}
+
+/// Mouvement granulaire (achat, vente, transfert, perte, ajustement).
+/// Permet de reconstituer / auditer un état journalier de Stock.
+model MouvementStock {
+  id           String        @id @default(cuid())
+
+  stockId      String
+  stock        Stock         @relation(fields: [stockId], references: [id], onDelete: Cascade)
+
+  produitId    String
+  produit      Produit       @relation(fields: [produitId], references: [id])
+
+  type         TypeMouvement
+  quantiteKg   Float
+
+  /// Magasin source (pour transferts) — facultatif sinon
+  magasinSourceId       String?
+  magasinSource         Magasin? @relation("MouvementSource", fields: [magasinSourceId], references: [id])
+
+  /// Magasin destination (pour transferts) — facultatif sinon
+  magasinDestinationId  String?
+  magasinDestination    Magasin? @relation("MouvementDestination", fields: [magasinDestinationId], references: [id])
+
+  /// Référence externe libre : nom producteur, n° BL, n° facture…
+  reference    String?
+  motif        String?
+
+  saisiParId   String
+  saisiPar     User          @relation("MouvementSaisiPar", fields: [saisiParId], references: [id])
+
+  dateMvt      DateTime      @default(now())
+  createdAt    DateTime      @default(now())
+
+  @@index([stockId])
+  @@index([type])
+  @@index([dateMvt])
+  @@map("mouvements_stock")
+}
+
+// ─── DOMAINE AUDIT ─────────────────────────────────────────────────────
+
+/// Journal d'audit append-only — trace les actions sensibles.
+/// Ne pas supprimer les lignes (compliance).
+model AuditLog {
+  id            String      @id @default(cuid())
+
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id])
+
+  action        ActionAudit
+  /// Nom de l'entité métier impactée (ex: "Stock", "Magasin", "User")
+  entite        String
+  /// Identifiant de l'entité ciblée (id de la ligne touchée)
+  entiteId      String?
+
+  /// Snapshots avant/après en JSON sérialisé (SQLite : stocké en TEXT)
+  ancienneValeur String?
+  nouvelleValeur String?
+
+  ip            String?
+  userAgent     String?
+
+  createdAt     DateTime    @default(now())
+
+  @@index([userId])
+  @@index([entite, entiteId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
