@@ -1,0 +1,23 @@
+# Configuration Railway pour SOCOPAD
+# Doc : https://docs.railway.com/reference/config-as-code
+
+[build]
+# Buildpack Nixpacks — détection auto Next.js + node 24
+builder = "NIXPACKS"
+
+# Régénère le client Prisma avec le schema Postgres puis lance le build Next.
+# Le `prisma db push --schema=…` n'est PAS exécuté ici : on l'applique
+# manuellement depuis sa machine au premier déploiement (cf. DEPLOIEMENT.md).
+buildCommand = "npm run build:railway"
+
+[deploy]
+startCommand = "npm start"
+
+# Healthcheck : Railway considère l'app saine si /connexion répond < 30 s.
+# Cette page est publique, légère, et instancie la chaîne (auth + DB).
+healthcheckPath = "/connexion"
+healthcheckTimeout = 30
+
+# Politique de redémarrage en cas de crash (ex: connexion DB perdue)
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

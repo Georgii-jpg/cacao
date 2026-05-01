@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "start": "next start",
+    "build:railway": "prisma generate --schema=prisma/schema.postgres.prisma && next build",
+    "start": "next start -p ${PORT:-3000}",
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
+    "db:push:postgres": "prisma db push --schema=prisma/schema.postgres.prisma",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "db:seed": "tsx prisma/seed.ts",
