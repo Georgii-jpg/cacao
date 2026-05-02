@@ -32,7 +32,6 @@ function dateAujourdhui0h(): Date {
 export type KpisReseau = {
   magasinsActifs: number;
   magasinsTotal: number;
-  capaciteTotaleKg: number;
   stockTotalKg: number;
   remonteesAujourdhui: number;
   magasinsAvecSaisie: number;
@@ -49,7 +48,6 @@ export async function getKpisReseau(
     return {
       magasinsActifs: 0,
       magasinsTotal: 0,
-      capaciteTotaleKg: 0,
       stockTotalKg: 0,
       remonteesAujourdhui: 0,
       magasinsAvecSaisie: 0,
@@ -66,14 +64,10 @@ export async function getKpisReseau(
   };
   if (ctx.role !== "ADMIN") whereAValider.saisiParId = { not: userId };
 
-  const [magasinsActifs, magasinsTotal, capaciteAgg, fichesAValider, fichesRejetees, fichesAujourdhui] =
+  const [magasinsActifs, magasinsTotal, fichesAValider, fichesRejetees, fichesAujourdhui] =
     await Promise.all([
       prisma.magasin.count({ where: { ...portee, statut: "ACTIF" } }),
       prisma.magasin.count({ where: portee }),
-      prisma.magasin.aggregate({
-        where: { ...portee, statut: { not: "INACTIF" } },
-        _sum: { capaciteKg: true },
-      }),
       prisma.stock.count({ where: whereAValider }),
       prisma.stock.count({ where: { ...wherePortee, statut: "REJETE" } }),
       prisma.stock.findMany({
@@ -111,7 +105,6 @@ export async function getKpisReseau(
   return {
     magasinsActifs,
     magasinsTotal,
-    capaciteTotaleKg: capaciteAgg._sum.capaciteKg ?? 0,
     stockTotalKg: stockTotal,
     remonteesAujourdhui: fichesAujourdhui.length,
     magasinsAvecSaisie: fichesAujourdhui.length,

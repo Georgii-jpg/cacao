@@ -33,7 +33,6 @@ type MagasinInitial = {
   ville: string;
   adresse: string | null;
   telephone: string | null;
-  capaciteKg: number;
   statut: StatutMagasin;
   regionId: string;
   latitude: number | null;
@@ -186,18 +185,6 @@ export function FormMagasin({ regions, candidatsResponsable, magasin }: Props) {
             </Select>
           </div>
 
-          <Champ
-            id="capaciteKg"
-            type="number"
-            libelle="Capacité de stockage (kg)"
-            placeholder="50000"
-            defaultValue={magasin?.capaciteKg?.toString()}
-            erreur={erreurs.capaciteKg}
-            required
-            min="0"
-            step="1"
-          />
-          <div className="flex items-end gap-2 sm:col-span-1" />
           <Champ
             id="latitude"
             type="number"

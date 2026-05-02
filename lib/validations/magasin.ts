@@ -39,10 +39,6 @@ const baseMagasin = z.object({
     .max(30)
     .optional()
     .or(z.literal("").transform(() => undefined)),
-  capaciteKg: z.coerce
-    .number({ error: "Capacité invalide" })
-    .positive("La capacité doit être positive")
-    .max(10_000_000, "Capacité trop élevée"),
   statut: z.enum([
     StatutMagasin.ACTIF,
     StatutMagasin.INACTIF,

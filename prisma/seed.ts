@@ -64,42 +64,42 @@ const REGIONS = [
   { code: "CENTRE", nom: "Centre", description: "Yamoussoukro et bassin central" },
 ];
 
-// 25 magasins × ville × région × capacité (kg)
+// 25 magasins × ville × région
 const MAGASINS = [
   // SUD (5)
-  { code: "MAG-ABJ-01", nom: "Abidjan Plateau",     ville: "Abidjan",     region: "SUD",          capaciteKg: 80000, lat: 5.3197, lng: -4.0267 },
-  { code: "MAG-ABJ-02", nom: "Abidjan Treichville", ville: "Abidjan",     region: "SUD",          capaciteKg: 60000, lat: 5.2922, lng: -4.0167 },
-  { code: "MAG-ABJ-03", nom: "Abidjan Yopougon",    ville: "Abidjan",     region: "SUD",          capaciteKg: 50000, lat: 5.3417, lng: -4.0867 },
-  { code: "MAG-BAS-01", nom: "Grand-Bassam",        ville: "Grand-Bassam",region: "SUD",          capaciteKg: 30000, lat: 5.2125, lng: -3.7372 },
-  { code: "MAG-ABO-01", nom: "Aboisso",             ville: "Aboisso",     region: "SUD",          capaciteKg: 25000, lat: 5.4711, lng: -3.2069 },
+  { code: "MAG-ABJ-01", nom: "Abidjan Plateau",     ville: "Abidjan",     region: "SUD",          lat: 5.3197, lng: -4.0267 },
+  { code: "MAG-ABJ-02", nom: "Abidjan Treichville", ville: "Abidjan",     region: "SUD",          lat: 5.2922, lng: -4.0167 },
+  { code: "MAG-ABJ-03", nom: "Abidjan Yopougon",    ville: "Abidjan",     region: "SUD",          lat: 5.3417, lng: -4.0867 },
+  { code: "MAG-BAS-01", nom: "Grand-Bassam",        ville: "Grand-Bassam",region: "SUD",          lat: 5.2125, lng: -3.7372 },
+  { code: "MAG-ABO-01", nom: "Aboisso",             ville: "Aboisso",     region: "SUD",          lat: 5.4711, lng: -3.2069 },
 
   // SUD-OUEST (6)
-  { code: "MAG-SP-01",  nom: "San-Pédro Port",      ville: "San-Pédro",   region: "SUD-OUEST",    capaciteKg: 120000, lat: 4.7485, lng: -6.6363 },
-  { code: "MAG-SP-02",  nom: "San-Pédro Centre",    ville: "San-Pédro",   region: "SUD-OUEST",    capaciteKg: 60000,  lat: 4.7485, lng: -6.6363 },
-  { code: "MAG-TAB-01", nom: "Tabou",               ville: "Tabou",       region: "SUD-OUEST",    capaciteKg: 30000,  lat: 4.4231, lng: -7.3539 },
-  { code: "MAG-SOU-01", nom: "Soubré",              ville: "Soubré",      region: "SUD-OUEST",    capaciteKg: 70000,  lat: 5.7833, lng: -6.6000 },
-  { code: "MAG-MEA-01", nom: "Méagui",              ville: "Méagui",      region: "SUD-OUEST",    capaciteKg: 40000,  lat: 5.4500, lng: -6.5500 },
-  { code: "MAG-SAS-01", nom: "Sassandra",           ville: "Sassandra",   region: "SUD-OUEST",    capaciteKg: 35000,  lat: 4.9500, lng: -6.0833 },
+  { code: "MAG-SP-01",  nom: "San-Pédro Port",      ville: "San-Pédro",   region: "SUD-OUEST",    lat: 4.7485, lng: -6.6363 },
+  { code: "MAG-SP-02",  nom: "San-Pédro Centre",    ville: "San-Pédro",   region: "SUD-OUEST",    lat: 4.7485, lng: -6.6363 },
+  { code: "MAG-TAB-01", nom: "Tabou",               ville: "Tabou",       region: "SUD-OUEST",    lat: 4.4231, lng: -7.3539 },
+  { code: "MAG-SOU-01", nom: "Soubré",              ville: "Soubré",      region: "SUD-OUEST",    lat: 5.7833, lng: -6.6000 },
+  { code: "MAG-MEA-01", nom: "Méagui",              ville: "Méagui",      region: "SUD-OUEST",    lat: 5.4500, lng: -6.5500 },
+  { code: "MAG-SAS-01", nom: "Sassandra",           ville: "Sassandra",   region: "SUD-OUEST",    lat: 4.9500, lng: -6.0833 },
 
   // CENTRE-OUEST (6)
-  { code: "MAG-DAL-01", nom: "Daloa Centre",        ville: "Daloa",       region: "CENTRE-OUEST", capaciteKg: 90000,  lat: 6.8772, lng: -6.4503 },
-  { code: "MAG-DAL-02", nom: "Daloa Sud",           ville: "Daloa",       region: "CENTRE-OUEST", capaciteKg: 50000,  lat: 6.8772, lng: -6.4503 },
-  { code: "MAG-ISS-01", nom: "Issia",               ville: "Issia",       region: "CENTRE-OUEST", capaciteKg: 45000,  lat: 6.4925, lng: -6.5839 },
-  { code: "MAG-VAV-01", nom: "Vavoua",              ville: "Vavoua",      region: "CENTRE-OUEST", capaciteKg: 40000,  lat: 7.3833, lng: -6.4667 },
-  { code: "MAG-BOU-01", nom: "Bouaflé",             ville: "Bouaflé",     region: "CENTRE-OUEST", capaciteKg: 35000,  lat: 6.9833, lng: -5.7500 },
-  { code: "MAG-SIN-01", nom: "Sinfra",              ville: "Sinfra",      region: "CENTRE-OUEST", capaciteKg: 30000,  lat: 6.6167, lng: -5.9167 },
+  { code: "MAG-DAL-01", nom: "Daloa Centre",        ville: "Daloa",       region: "CENTRE-OUEST", lat: 6.8772, lng: -6.4503 },
+  { code: "MAG-DAL-02", nom: "Daloa Sud",           ville: "Daloa",       region: "CENTRE-OUEST", lat: 6.8772, lng: -6.4503 },
+  { code: "MAG-ISS-01", nom: "Issia",               ville: "Issia",       region: "CENTRE-OUEST", lat: 6.4925, lng: -6.5839 },
+  { code: "MAG-VAV-01", nom: "Vavoua",              ville: "Vavoua",      region: "CENTRE-OUEST", lat: 7.3833, lng: -6.4667 },
+  { code: "MAG-BOU-01", nom: "Bouaflé",             ville: "Bouaflé",     region: "CENTRE-OUEST", lat: 6.9833, lng: -5.7500 },
+  { code: "MAG-SIN-01", nom: "Sinfra",              ville: "Sinfra",      region: "CENTRE-OUEST", lat: 6.6167, lng: -5.9167 },
 
   // OUEST (4)
-  { code: "MAG-MAN-01", nom: "Man",                 ville: "Man",         region: "OUEST",        capaciteKg: 55000,  lat: 7.4125, lng: -7.5538 },
-  { code: "MAG-DUE-01", nom: "Duékoué",             ville: "Duékoué",     region: "OUEST",        capaciteKg: 40000,  lat: 6.7416, lng: -7.3478 },
-  { code: "MAG-GUI-01", nom: "Guiglo",              ville: "Guiglo",      region: "OUEST",        capaciteKg: 35000,  lat: 6.5447, lng: -7.4906 },
-  { code: "MAG-BAN-01", nom: "Bangolo",             ville: "Bangolo",     region: "OUEST",        capaciteKg: 25000,  lat: 7.0167, lng: -7.4833 },
+  { code: "MAG-MAN-01", nom: "Man",                 ville: "Man",         region: "OUEST",        lat: 7.4125, lng: -7.5538 },
+  { code: "MAG-DUE-01", nom: "Duékoué",             ville: "Duékoué",     region: "OUEST",        lat: 6.7416, lng: -7.3478 },
+  { code: "MAG-GUI-01", nom: "Guiglo",              ville: "Guiglo",      region: "OUEST",        lat: 6.5447, lng: -7.4906 },
+  { code: "MAG-BAN-01", nom: "Bangolo",             ville: "Bangolo",     region: "OUEST",        lat: 7.0167, lng: -7.4833 },
 
   // CENTRE (4)
-  { code: "MAG-YAM-01", nom: "Yamoussoukro",        ville: "Yamoussoukro",region: "CENTRE",       capaciteKg: 70000,  lat: 6.8276, lng: -5.2893 },
-  { code: "MAG-BKE-01", nom: "Bouaké",              ville: "Bouaké",      region: "CENTRE",       capaciteKg: 60000,  lat: 7.6906, lng: -5.0356 },
-  { code: "MAG-TOU-01", nom: "Toumodi",             ville: "Toumodi",     region: "CENTRE",       capaciteKg: 35000,  lat: 6.5500, lng: -5.0167 },
-  { code: "MAG-DIM-01", nom: "Dimbokro",            ville: "Dimbokro",    region: "CENTRE",       capaciteKg: 30000,  lat: 6.6500, lng: -4.7000 },
+  { code: "MAG-YAM-01", nom: "Yamoussoukro",        ville: "Yamoussoukro",region: "CENTRE",       lat: 6.8276, lng: -5.2893 },
+  { code: "MAG-BKE-01", nom: "Bouaké",              ville: "Bouaké",      region: "CENTRE",       lat: 7.6906, lng: -5.0356 },
+  { code: "MAG-TOU-01", nom: "Toumodi",             ville: "Toumodi",     region: "CENTRE",       lat: 6.5500, lng: -5.0167 },
+  { code: "MAG-DIM-01", nom: "Dimbokro",            ville: "Dimbokro",    region: "CENTRE",       lat: 6.6500, lng: -4.7000 },
 ];
 
 const PRODUITS = [
@@ -148,7 +148,6 @@ async function main() {
         ville: m.ville,
         latitude: m.lat,
         longitude: m.lng,
-        capaciteKg: m.capaciteKg,
         statut: "ACTIF",
         regionId: regionsParCode[m.region],
       },
@@ -247,8 +246,8 @@ async function main() {
     const produitsMagasin = [...produits].sort(() => rand() - 0.5).slice(0, nbProduits);
 
     for (const p of produitsMagasin) {
-      // Stock d'ouverture initial proportionnel à la capacité
-      let stockCourant = randFloat(m.capaciteKg * 0.2, m.capaciteKg * 0.6);
+      // Stock d'ouverture initial dans une plage métier raisonnable (kg)
+      let stockCourant = randFloat(5_000, 30_000);
 
       for (let j = JOURS - 1; j >= 0; j--) {
         const date = dateAJ0(j);

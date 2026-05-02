@@ -180,7 +180,7 @@ export async function genererSnapshot(
   const stocks = await prisma.stock.findMany({
     where,
     include: {
-      magasin: { select: { code: true, nom: true, ville: true, capaciteKg: true, region: { select: { nom: true } } } },
+      magasin: { select: { code: true, nom: true, ville: true, region: { select: { nom: true } } } },
       produit: { select: { code: true, nom: true, type: true, grade: true } },
     },
     orderBy: { date: "desc" },
@@ -201,36 +201,28 @@ export async function genererSnapshot(
     "Magasin",
     "Ville",
     "Region",
-    "Capacite (kg)",
     "Code produit",
     "Produit",
     "Type",
     "Grade",
     "Date derniere validation",
     "Stock cloture (kg)",
-    "Taux occupation produit (%)",
   ];
 
   const lignes = [ligneCsv(entetes)];
   for (const s of retenus) {
-    const taux =
-      s.magasin.capaciteKg > 0
-        ? nombreCsv((s.stockClotureKg / s.magasin.capaciteKg) * 100, 1)
-        : "";
     lignes.push(
       ligneCsv([
         s.magasin.code,
         s.magasin.nom,
         s.magasin.ville,
         s.magasin.region.nom,
-        nombreCsv(s.magasin.capaciteKg, 0),
         s.produit.code,
         s.produit.nom,
         s.produit.type,
         s.produit.grade,
         dateIso(s.date),
         nombreCsv(s.stockClotureKg),
-        taux,
       ]),
     );
   }
@@ -278,7 +270,6 @@ export async function genererActivite(
       code: true,
       nom: true,
       ville: true,
-      capaciteKg: true,
       statut: true,
       region: { select: { nom: true } },
     },

@@ -56,7 +56,6 @@ export default async function PageModifierMagasin({ params }: Props) {
           ville: magasin.ville,
           adresse: magasin.adresse,
           telephone: magasin.telephone,
-          capaciteKg: magasin.capaciteKg,
           statut: magasin.statut,
           regionId: magasin.regionId,
           latitude: magasin.latitude,

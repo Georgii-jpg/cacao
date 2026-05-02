@@ -64,8 +64,6 @@ export default async function PageDashboard() {
     kpis.magasinsActifs > 0
       ? kpis.remonteesAujourdhui / kpis.magasinsActifs
       : 0;
-  const tauxOccupation =
-    kpis.capaciteTotaleKg > 0 ? kpis.stockTotalKg / kpis.capaciteTotaleKg : 0;
 
   const titreRemontee = role === "ADMIN" ? "Remontées par région (7 j)" : "Remontées par magasin (7 j)";
   const descRemontee =
@@ -96,11 +94,7 @@ export default async function PageDashboard() {
         <KpiCard
           libelle="Stock total réseau"
           valeur={formatPoidsKg(kpis.stockTotalKg)}
-          sousTexte={
-            kpis.capaciteTotaleKg > 0
-              ? `${formatPourcent(tauxOccupation, 0)} de la capacité`
-              : "—"
-          }
+          sousTexte="dernières clôtures validées"
           icone={<Package className="h-4 w-4 text-muted-foreground" />}
         />
         <KpiCard

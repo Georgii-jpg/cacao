@@ -111,8 +111,6 @@ model Magasin {
   adresse         String?
   latitude        Float?
   longitude       Float?
-  /// Capacité de stockage maximale en kilogrammes
-  capaciteKg      Float
   statut          StatutMagasin  @default(ACTIF)
   telephone       String?
 

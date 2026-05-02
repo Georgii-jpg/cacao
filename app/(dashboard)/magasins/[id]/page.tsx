@@ -121,13 +121,7 @@ export default async function PageDetailMagasin({ params }: Props) {
       </div>
 
       {/* KPIs sur 30 j ─────────────────────────────────────────────── */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <Carte
-          titre="Capacité"
-          valeur={formatPoidsKg(magasin.capaciteKg)}
-          icone={<Package className="h-4 w-4 text-muted-foreground" />}
-          sousTexte="stockage maximal"
-        />
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
         <Carte
           titre="Taux de remontée 30 j"
           valeur={formatPourcent(kpis.tauxRemontee, 0)}

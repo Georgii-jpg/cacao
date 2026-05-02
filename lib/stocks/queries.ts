@@ -157,7 +157,7 @@ export async function getFichePourSaisie(opts: {
     }),
     prisma.magasin.findUnique({
       where: { id: opts.magasinId },
-      select: { id: true, code: true, nom: true, capaciteKg: true, statut: true },
+      select: { id: true, code: true, nom: true, statut: true },
     }),
     prisma.produit.findUnique({
       where: { id: opts.produitId },

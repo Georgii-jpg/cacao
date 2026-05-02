@@ -11,7 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { BadgeStatutMagasin } from "./badge-statut";
-import { formatPoidsKg } from "@/lib/utils/format";
 import type { StatutMagasin } from "@/app/generated/prisma/enums";
 
 type LigneMagasin = {
@@ -19,7 +18,6 @@ type LigneMagasin = {
   code: string;
   nom: string;
   ville: string;
-  capaciteKg: number;
   statut: StatutMagasin;
   region: { id: string; code: string; nom: string };
   responsable: {
@@ -52,7 +50,6 @@ export function TableMagasins({ magasins }: { magasins: LigneMagasin[] }) {
             <TableHead>Nom</TableHead>
             <TableHead>Ville</TableHead>
             <TableHead>Région</TableHead>
-            <TableHead className="text-right">Capacité</TableHead>
             <TableHead>Responsable</TableHead>
             <TableHead className="text-center">Équipe</TableHead>
             <TableHead>Statut</TableHead>
@@ -88,9 +85,6 @@ export function TableMagasins({ magasins }: { magasins: LigneMagasin[] }) {
                   <span className="text-xs text-muted-foreground">
                     {m.region.nom}
                   </span>
-                </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {formatPoidsKg(m.capaciteKg)}
                 </TableCell>
                 <TableCell>
                   {nomResp ? (

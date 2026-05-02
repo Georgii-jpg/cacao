@@ -42,8 +42,6 @@ type Props = {
   produitId: string;
   /// Date au format YYYY-MM-DD
   date: string;
-  /// Capacité du magasin en kg (pour avertissement de dépassement)
-  capaciteKg: number;
   /// Suggestion de stock d'ouverture (= clôture du dernier validé)
   ouvertureSuggereeKg: number;
   fiche?: FicheInitiale;
@@ -55,7 +53,6 @@ export function FormSaisieStock({
   magasinId,
   produitId,
   date,
-  capaciteKg,
   ouvertureSuggereeKg,
   fiche,
   peutSoumettre = true,
@@ -79,7 +76,6 @@ export function FormSaisieStock({
     () => Math.max(0, (ouverture || 0) + (entrees || 0) - (sorties || 0)),
     [ouverture, entrees, sorties],
   );
-  const depasseCapacite = cloture > capaciteKg;
   const sortieExcessive = (sorties || 0) > (ouverture || 0) + (entrees || 0);
 
   useEffect(() => {
@@ -177,12 +173,6 @@ export function FormSaisieStock({
               <div className="flex h-9 items-center rounded-md border bg-muted/40 px-3 text-sm font-medium tabular-nums">
                 {formatPoidsKg(cloture)}
               </div>
-              {depasseCapacite && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  Dépasse la capacité du magasin ({formatPoidsKg(capaciteKg)})
-                </p>
-              )}
               {sortieExcessive && (
                 <p className="text-xs text-destructive flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />

@@ -210,7 +210,6 @@ async function SaisiePourTriplet({
         magasinId={magasinId}
         produitId={produitId}
         date={dateIso}
-        capaciteKg={fiche.magasin.capaciteKg}
         ouvertureSuggereeKg={fiche.ouvertureSuggereeKg}
         peutSoumettre={peutSoumettre}
         fiche={
