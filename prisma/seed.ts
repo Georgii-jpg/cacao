@@ -2,10 +2,10 @@
 //  SOCOPAD — Seed (jeu de données fictives)
 // ───────────────────────────────────────────────────────────────────────
 //  Génère :
-//   • 5 régions (zones cacao Côte d'Ivoire)
-//   • 25 magasins répartis dans ces régions
+//   • 5 régions opérationnelles SOCOPAD (Daloa, San-Pedro, Duekoue, Man, Soubre)
+//   • 20 magasins répartis dans ces régions
 //   • 5 produits cacao (combinaisons type × grade)
-//   • 1 admin + 5 managers régionaux + 25 responsables magasin
+//   • 1 admin + 5 managers régionaux + 20 responsables magasin
 //   • 30 jours d'historique de stocks + mouvements rattachés
 //
 //  Lancer : `npm run db:seed`
@@ -57,49 +57,45 @@ function dateAJ0(daysAgo: number): Date {
 // ─── Données de référence ──────────────────────────────────────────────
 
 const REGIONS = [
-  { code: "SUD", nom: "Sud", description: "Région d'Abidjan et littoral est" },
-  { code: "SUD-OUEST", nom: "Sud-Ouest", description: "San-Pédro et hinterland cacaoyer" },
-  { code: "CENTRE-OUEST", nom: "Centre-Ouest", description: "Daloa, cœur historique du cacao" },
-  { code: "OUEST", nom: "Ouest", description: "Man, zone montagneuse" },
-  { code: "CENTRE", nom: "Centre", description: "Yamoussoukro et bassin central" },
+  { code: "DALOA",     nom: "Daloa",     description: "Pôle d'achat Daloa" },
+  { code: "SAN-PEDRO", nom: "San-Pedro", description: "Pôle d'achat San-Pedro et littoral sud-ouest" },
+  { code: "DUEKOUE",   nom: "Duekoue",   description: "Pôle d'achat Duekoue et zone Ouest" },
+  { code: "MAN",       nom: "Man",       description: "Pôle d'achat Man et zone montagneuse" },
+  { code: "SOUBRE",    nom: "Soubre",    description: "Pôle d'achat Soubre" },
 ];
 
-// 25 magasins × ville × région
+// 20 magasins SOCOPAD × ville × région opérationnelle
+// (lat/lng `null` pour les localités peu cartographiées — à compléter en exploitation)
 const MAGASINS = [
-  // SUD (5)
-  { code: "MAG-ABJ-01", nom: "Abidjan Plateau",     ville: "Abidjan",     region: "SUD",          lat: 5.3197, lng: -4.0267 },
-  { code: "MAG-ABJ-02", nom: "Abidjan Treichville", ville: "Abidjan",     region: "SUD",          lat: 5.2922, lng: -4.0167 },
-  { code: "MAG-ABJ-03", nom: "Abidjan Yopougon",    ville: "Abidjan",     region: "SUD",          lat: 5.3417, lng: -4.0867 },
-  { code: "MAG-BAS-01", nom: "Grand-Bassam",        ville: "Grand-Bassam",region: "SUD",          lat: 5.2125, lng: -3.7372 },
-  { code: "MAG-ABO-01", nom: "Aboisso",             ville: "Aboisso",     region: "SUD",          lat: 5.4711, lng: -3.2069 },
+  // DALOA (7)
+  { code: "MAG-01",  nom: "Daloa",       ville: "Daloa",       region: "DALOA",     lat: 6.8772, lng: -6.4503 },
+  { code: "MAG-06",  nom: "Belle-ville", ville: "Belle-ville", region: "DALOA",     lat: null as number | null, lng: null as number | null },
+  { code: "MAG-05",  nom: "Pelezi",      ville: "Pelezi",      region: "DALOA",     lat: null as number | null, lng: null as number | null },
+  { code: "MAG-07",  nom: "Gonate",      ville: "Gonate",      region: "DALOA",     lat: null as number | null, lng: null as number | null },
+  { code: "MAG-004", nom: "Zebra",       ville: "Zebra",       region: "DALOA",     lat: null as number | null, lng: null as number | null },
+  { code: "MAG-005", nom: "Youkorea",    ville: "Youkorea",    region: "DALOA",     lat: null as number | null, lng: null as number | null },
+  { code: "MAG-006", nom: "Zalihouan",   ville: "Zalihouan",   region: "DALOA",     lat: null as number | null, lng: null as number | null },
 
-  // SUD-OUEST (6)
-  { code: "MAG-SP-01",  nom: "San-Pédro Port",      ville: "San-Pédro",   region: "SUD-OUEST",    lat: 4.7485, lng: -6.6363 },
-  { code: "MAG-SP-02",  nom: "San-Pédro Centre",    ville: "San-Pédro",   region: "SUD-OUEST",    lat: 4.7485, lng: -6.6363 },
-  { code: "MAG-TAB-01", nom: "Tabou",               ville: "Tabou",       region: "SUD-OUEST",    lat: 4.4231, lng: -7.3539 },
-  { code: "MAG-SOU-01", nom: "Soubré",              ville: "Soubré",      region: "SUD-OUEST",    lat: 5.7833, lng: -6.6000 },
-  { code: "MAG-MEA-01", nom: "Méagui",              ville: "Méagui",      region: "SUD-OUEST",    lat: 5.4500, lng: -6.5500 },
-  { code: "MAG-SAS-01", nom: "Sassandra",           ville: "Sassandra",   region: "SUD-OUEST",    lat: 4.9500, lng: -6.0833 },
+  // SAN-PEDRO (2)
+  { code: "MAG-09",  nom: "Djouroutou",  ville: "Djouroutou",  region: "SAN-PEDRO", lat: null as number | null, lng: null as number | null },
+  { code: "MAG-15",  nom: "Para",        ville: "Para",        region: "SAN-PEDRO", lat: null as number | null, lng: null as number | null },
 
-  // CENTRE-OUEST (6)
-  { code: "MAG-DAL-01", nom: "Daloa Centre",        ville: "Daloa",       region: "CENTRE-OUEST", lat: 6.8772, lng: -6.4503 },
-  { code: "MAG-DAL-02", nom: "Daloa Sud",           ville: "Daloa",       region: "CENTRE-OUEST", lat: 6.8772, lng: -6.4503 },
-  { code: "MAG-ISS-01", nom: "Issia",               ville: "Issia",       region: "CENTRE-OUEST", lat: 6.4925, lng: -6.5839 },
-  { code: "MAG-VAV-01", nom: "Vavoua",              ville: "Vavoua",      region: "CENTRE-OUEST", lat: 7.3833, lng: -6.4667 },
-  { code: "MAG-BOU-01", nom: "Bouaflé",             ville: "Bouaflé",     region: "CENTRE-OUEST", lat: 6.9833, lng: -5.7500 },
-  { code: "MAG-SIN-01", nom: "Sinfra",              ville: "Sinfra",      region: "CENTRE-OUEST", lat: 6.6167, lng: -5.9167 },
+  // DUEKOUE (7)
+  { code: "MAG-21",  nom: "Tai",         ville: "Tai",         region: "DUEKOUE",   lat: 5.8722, lng: -7.4500 },
+  { code: "MAG-16",  nom: "Keibly",      ville: "Keibly",      region: "DUEKOUE",   lat: null as number | null, lng: null as number | null },
+  { code: "MAG-37",  nom: "Kaade",       ville: "Kaade",       region: "DUEKOUE",   lat: null as number | null, lng: null as number | null },
+  { code: "MAG-12",  nom: "Blolequin",   ville: "Blolequin",   region: "DUEKOUE",   lat: 6.5667, lng: -7.5333 },
+  { code: "MAG-35",  nom: "Dah",         ville: "Dah",         region: "DUEKOUE",   lat: null as number | null, lng: null as number | null },
+  { code: "MAG-002", nom: "Semian",      ville: "Semian",      region: "DUEKOUE",   lat: null as number | null, lng: null as number | null },
+  { code: "MAG-31",  nom: "Kouibly",     ville: "Kouibly",     region: "DUEKOUE",   lat: 7.2667, lng: -7.2500 },
 
-  // OUEST (4)
-  { code: "MAG-MAN-01", nom: "Man",                 ville: "Man",         region: "OUEST",        lat: 7.4125, lng: -7.5538 },
-  { code: "MAG-DUE-01", nom: "Duékoué",             ville: "Duékoué",     region: "OUEST",        lat: 6.7416, lng: -7.3478 },
-  { code: "MAG-GUI-01", nom: "Guiglo",              ville: "Guiglo",      region: "OUEST",        lat: 6.5447, lng: -7.4906 },
-  { code: "MAG-BAN-01", nom: "Bangolo",             ville: "Bangolo",     region: "OUEST",        lat: 7.0167, lng: -7.4833 },
+  // MAN (1)
+  { code: "MAG-001", nom: "Danane",      ville: "Danane",      region: "MAN",       lat: 7.2606, lng: -8.1553 },
 
-  // CENTRE (4)
-  { code: "MAG-YAM-01", nom: "Yamoussoukro",        ville: "Yamoussoukro",region: "CENTRE",       lat: 6.8276, lng: -5.2893 },
-  { code: "MAG-BKE-01", nom: "Bouaké",              ville: "Bouaké",      region: "CENTRE",       lat: 7.6906, lng: -5.0356 },
-  { code: "MAG-TOU-01", nom: "Toumodi",             ville: "Toumodi",     region: "CENTRE",       lat: 6.5500, lng: -5.0167 },
-  { code: "MAG-DIM-01", nom: "Dimbokro",            ville: "Dimbokro",    region: "CENTRE",       lat: 6.6500, lng: -4.7000 },
+  // SOUBRE (3)
+  { code: "MAG-003", nom: "Douaguerer",  ville: "Douaguerer",  region: "SOUBRE",    lat: null as number | null, lng: null as number | null },
+  { code: "MAG-03",  nom: "Buyo",        ville: "Buyo",        region: "SOUBRE",    lat: 6.2833, lng: -7.0000 },
+  { code: "MAG-18",  nom: "Dobre",       ville: "Dobre",       region: "SOUBRE",    lat: null as number | null, lng: null as number | null },
 ];
 
 const PRODUITS = [
