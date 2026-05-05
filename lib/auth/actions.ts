@@ -3,6 +3,7 @@
 // Centralisées ici pour pouvoir être appelées depuis n'importe quel client.
 
 import { AuthError } from "next-auth";
+import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/lib/auth";
 
 export type EtatConnexion = {
@@ -42,8 +43,12 @@ export async function connecter(
 }
 
 /**
- * Action de déconnexion. Redirige vers la page d'accueil.
+ * Action de déconnexion. Détache d'abord la session (cookies effacés)
+ * puis redirige explicitement vers /connexion. On évite `redirectTo`
+ * de NextAuth qui, dans certaines configs proxy (Railway + NextAuth v5
+ * beta), provoque une erreur de chargement après suppression du cookie.
  */
 export async function deconnecter() {
-  await signOut({ redirectTo: "/" });
+  await signOut({ redirect: false });
+  redirect("/connexion");
 }
