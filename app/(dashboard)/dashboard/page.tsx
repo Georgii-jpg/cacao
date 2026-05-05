@@ -33,7 +33,7 @@ import {
   CarteFichesRejetees,
   CarteMagasinsSansSaisie,
 } from "@/components/dashboard/liste-alertes";
-import { formatPoidsKg, formatPourcent } from "@/lib/utils/format";
+import { formatNombre, formatPourcent } from "@/lib/utils/format";
 
 export const metadata = { title: "Tableau de bord" };
 export const dynamic = "force-dynamic";
@@ -93,7 +93,7 @@ export default async function PageDashboard() {
         />
         <KpiCard
           libelle="Stock total réseau"
-          valeur={formatPoidsKg(kpis.stockTotalKg)}
+          valeur={`${formatNombre(Math.round(kpis.stockTotalKg))} kg`}
           sousTexte="dernières clôtures validées"
           icone={<Package className="h-4 w-4 text-muted-foreground" />}
         />
