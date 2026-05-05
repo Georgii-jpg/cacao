@@ -1,8 +1,7 @@
 "use client";
 // Formulaire de saisie rapide (mode mobile magasinier).
 // Une carte par produit, avec 2 champs : acheté aujourd'hui + stock total
-// actuel. Affiche le dernier stock validé connu pour aider le magasinier.
-// Pour les produits déjà soumis/validés aujourd'hui : carte en lecture seule.
+// actuel. Pour les produits déjà soumis/validés aujourd'hui : lecture seule.
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, Send, AlertCircle, AlertTriangle } from "lucide-react";
@@ -18,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -180,26 +178,7 @@ function CarteLigne({
     <Card className={verrouillee ? "opacity-90" : ""}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <CardTitle className="text-base">{ligne.produit.nom}</CardTitle>
-            <CardDescription className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs">
-              <span className="rounded bg-muted px-1.5 py-0.5 font-mono">
-                {ligne.produit.code}
-              </span>
-              <span>
-                Dernier stock validé :{" "}
-                <strong>{formatPoidsKg(ligne.dernierStockKg)}</strong>
-                {ligne.dernierStockDate && (
-                  <>
-                    {" "}le{" "}
-                    {new Intl.DateTimeFormat("fr-FR").format(
-                      new Date(ligne.dernierStockDate),
-                    )}
-                  </>
-                )}
-              </span>
-            </CardDescription>
-          </div>
+          <CardTitle className="text-lg">{ligne.produit.nom}</CardTitle>
           {verrouillee && <BadgeStatut statut={ligne.fiche!.statut} />}
         </div>
       </CardHeader>

@@ -1,20 +1,13 @@
 // Saisie rapide — mode mobile pour les responsables/opérateurs magasin.
-// Affiche par produit le dernier stock validé connu et 2 champs simples :
-// "Acheté aujourd'hui" + "Stock total actuel". Le serveur déduit ouverture
-// et sorties, et soumet directement pour validation manager.
+// 3 lignes fixes : Cacao, Café, Anacarde. Saisie minimaliste de 2 chiffres
+// par ligne (acheté + stock total actuel). Le serveur déduit ouverture et
+// sorties, et soumet directement pour validation manager.
 import { redirect } from "next/navigation";
 
 import { exigerPermission } from "@/lib/auth/require";
 import { prisma } from "@/lib/db/prisma";
 import { dateAujourdhui } from "@/lib/stocks/queries";
 import { FormSaisieRapide } from "@/components/stocks/form-saisie-rapide";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, ClipboardCheck } from "lucide-react";
 
@@ -35,7 +28,11 @@ export default async function PageSaisieRapide() {
   const ajd = dateAujourdhui();
   const dateIso = ajd.toISOString().slice(0, 10);
 
-  const [magasin, produits] = await Promise.all([
+  // 3 produits de base affichés dans cet ordre fixe.
+  // Doivent exister dans la base (cf. scripts/creer-produits-base.ts).
+  const CODES_PRODUITS_BASE = ["CACAO", "CAFE", "ANACARDE"] as const;
+
+  const [magasin, produitsBase] = await Promise.all([
     prisma.magasin.findUnique({
       where: { id: magasinId },
       select: {
@@ -48,11 +45,15 @@ export default async function PageSaisieRapide() {
       },
     }),
     prisma.produit.findMany({
-      where: { actif: true },
+      where: { actif: true, code: { in: [...CODES_PRODUITS_BASE] } },
       select: { id: true, code: true, nom: true, type: true, grade: true },
-      orderBy: [{ type: "asc" }, { grade: "asc" }],
     }),
   ]);
+
+  // Trie selon l'ordre voulu (Cacao, Café, Anacarde)
+  const produits = CODES_PRODUITS_BASE.map((code) =>
+    produitsBase.find((p) => p.code === code),
+  ).filter((p): p is NonNullable<typeof p> => p !== undefined);
 
   if (!magasin || magasin.statut === "INACTIF") {
     return (
@@ -110,6 +111,25 @@ export default async function PageSaisieRapide() {
     }),
   );
 
+  if (lignes.length === 0) {
+    return (
+      <div className="mx-auto max-w-xl space-y-4 p-4">
+        <Alert>
+          <AlertCircle className="size-4" />
+          <AlertTitle>Configuration requise</AlertTitle>
+          <AlertDescription>
+            Les 3 produits de base (Cacao, Café, Anacarde) ne sont pas encore
+            créés. Demandez à un administrateur d&apos;exécuter le script
+            <code className="mx-1 rounded bg-muted px-1 py-0.5">
+              scripts/creer-produits-base.ts
+            </code>
+            sur la base de production.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-2xl space-y-4 p-4 pb-24">
       <header className="space-y-1">
@@ -124,17 +144,6 @@ export default async function PageSaisieRapide() {
           {magasin.ville} — {magasin.region.nom}
         </p>
       </header>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Comment ça marche</CardTitle>
-          <CardDescription>
-            Pour chaque produit que vous avez manipulé aujourd&apos;hui, indiquez
-            la quantité <strong>achetée</strong> et votre <strong>stock total
-            actuel</strong>. Laissez vide les produits sans mouvement.
-          </CardDescription>
-        </CardHeader>
-      </Card>
 
       <FormSaisieRapide dateIso={dateIso} lignes={lignes} />
     </div>
