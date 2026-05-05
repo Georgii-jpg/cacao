@@ -1,6 +1,7 @@
 "use client";
 // Menu utilisateur (avatar + dropdown avec profil + déconnexion).
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import { LogOut, User, UserCircle } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { deconnecter } from "@/lib/auth/actions";
 import { LIBELLE_ROLE } from "@/lib/navigation";
 import type { RoleApp } from "@/lib/auth/permissions";
 
@@ -68,16 +68,13 @@ export function UserMenu({ nom, email, role }: Props) {
           }
         />
         <DropdownMenuSeparator />
-        <form action={deconnecter}>
-          <DropdownMenuItem
-            render={
-              <button type="submit" className="w-full cursor-pointer text-destructive focus:text-destructive">
-                <LogOut className="mr-2 h-4 w-4" />
-                Déconnexion
-              </button>
-            }
-          />
-        </form>
+        <DropdownMenuItem
+          onClick={() => signOut({ callbackUrl: "/connexion" })}
+          className="cursor-pointer text-destructive focus:text-destructive"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Déconnexion
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
