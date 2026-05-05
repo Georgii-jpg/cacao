@@ -13,7 +13,8 @@ export type IdIcone =
   | "building"
   | "users"
   | "file-text"
-  | "settings";
+  | "settings"
+  | "clipboard-check";
 
 export type ItemNavigation = {
   href: string;
@@ -28,6 +29,12 @@ export const itemsNavigation: ReadonlyArray<ItemNavigation> = [
     libelle: "Tableau de bord",
     icone: "home",
     roles: ["ADMIN", "MANAGER_REGIONAL", "RESPONSABLE_MAGASIN", "OPERATEUR_SAISIE"],
+  },
+  {
+    href: "/saisie-rapide",
+    libelle: "Saisie rapide",
+    icone: "clipboard-check",
+    roles: ["RESPONSABLE_MAGASIN", "OPERATEUR_SAISIE"],
   },
   {
     href: "/stocks",
