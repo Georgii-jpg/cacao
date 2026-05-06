@@ -10,6 +10,7 @@ import {
   FileText,
   Settings,
   ClipboardCheck,
+  BarChart3,
   type LucideIcon,
 } from "lucide-react";
 import type { IdIcone } from "@/lib/navigation";
@@ -22,6 +23,7 @@ const ICONES: Record<IdIcone, LucideIcon> = {
   "file-text": FileText,
   settings: Settings,
   "clipboard-check": ClipboardCheck,
+  "bar-chart": BarChart3,
 };
 
 export function IconeNav({

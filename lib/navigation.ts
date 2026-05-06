@@ -14,7 +14,8 @@ export type IdIcone =
   | "users"
   | "file-text"
   | "settings"
-  | "clipboard-check";
+  | "clipboard-check"
+  | "bar-chart";
 
 export type ItemNavigation = {
   href: string;
@@ -40,6 +41,12 @@ export const itemsNavigation: ReadonlyArray<ItemNavigation> = [
     href: "/stocks",
     libelle: "Stocks",
     icone: "package",
+    roles: ["ADMIN", "MANAGER_REGIONAL"],
+  },
+  {
+    href: "/suivi-stock",
+    libelle: "Suivi stock",
+    icone: "bar-chart",
     roles: ["ADMIN", "MANAGER_REGIONAL"],
   },
   {
