@@ -92,7 +92,7 @@ export default async function PageDashboard() {
       </header>
 
       {/* KPIs principaux ─────────────────────────────────────────── */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
         <KpiCard
           libelle="Magasins actifs"
           valeur={`${kpis.magasinsActifs}`}
@@ -100,8 +100,20 @@ export default async function PageDashboard() {
           icone={<Building2 className="h-4 w-4 text-muted-foreground" />}
         />
         <KpiCard
-          libelle="Stock total réseau"
-          valeur={`${formatNombre(Math.round(kpis.stockTotalKg))} kg`}
+          libelle="Stock total Cacao"
+          valeur={`${formatNombre(Math.round(kpis.stockParCode.CACAO))} kg`}
+          sousTexte="dernières clôtures validées"
+          icone={<Package className="h-4 w-4 text-muted-foreground" />}
+        />
+        <KpiCard
+          libelle="Stock total Café"
+          valeur={`${formatNombre(Math.round(kpis.stockParCode.CAFE))} kg`}
+          sousTexte="dernières clôtures validées"
+          icone={<Package className="h-4 w-4 text-muted-foreground" />}
+        />
+        <KpiCard
+          libelle="Stock total Anacarde"
+          valeur={`${formatNombre(Math.round(kpis.stockParCode.ANACARDE))} kg`}
           sousTexte="dernières clôtures validées"
           icone={<Package className="h-4 w-4 text-muted-foreground" />}
         />

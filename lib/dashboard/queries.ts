@@ -33,6 +33,9 @@ export type KpisReseau = {
   magasinsActifs: number;
   magasinsTotal: number;
   stockTotalKg: number;
+  /// Stock courant ventilé par code produit de base (CACAO, CAFE, ANACARDE).
+  /// Un produit absent du catalogue ou sans inventaire validé = 0.
+  stockParCode: { CACAO: number; CAFE: number; ANACARDE: number };
   remonteesAujourdhui: number;
   magasinsAvecSaisie: number;
   fichesAValider: number;
@@ -49,6 +52,7 @@ export async function getKpisReseau(
       magasinsActifs: 0,
       magasinsTotal: 0,
       stockTotalKg: 0,
+      stockParCode: { CACAO: 0, CAFE: 0, ANACARDE: 0 },
       remonteesAujourdhui: 0,
       magasinsAvecSaisie: 0,
       fichesAValider: 0,
@@ -90,22 +94,29 @@ export async function getKpisReseau(
       produitId: true,
       date: true,
       stockClotureKg: true,
+      produit: { select: { code: true } },
     },
     orderBy: { date: "desc" },
   });
   const vuParCouple = new Set<string>();
   let stockTotal = 0;
+  const stockParCode = { CACAO: 0, CAFE: 0, ANACARDE: 0 };
   for (const s of dernieresValides) {
     const cle = `${s.magasinId}:${s.produitId}`;
     if (vuParCouple.has(cle)) continue;
     vuParCouple.add(cle);
     stockTotal += s.stockClotureKg;
+    const code = s.produit.code;
+    if (code === "CACAO" || code === "CAFE" || code === "ANACARDE") {
+      stockParCode[code] += s.stockClotureKg;
+    }
   }
 
   return {
     magasinsActifs,
     magasinsTotal,
     stockTotalKg: stockTotal,
+    stockParCode,
     remonteesAujourdhui: fichesAujourdhui.length,
     magasinsAvecSaisie: fichesAujourdhui.length,
     fichesAValider,
