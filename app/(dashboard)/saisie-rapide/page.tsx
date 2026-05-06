@@ -9,7 +9,15 @@ import { prisma } from "@/lib/db/prisma";
 import { dateAujourdhui } from "@/lib/stocks/queries";
 import { FormSaisieRapide } from "@/components/stocks/form-saisie-rapide";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ClipboardCheck } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { AlertCircle, ClipboardCheck, Package } from "lucide-react";
+import { formatNombre } from "@/lib/utils/format";
+
+const LIBELLE_FILIERE: Record<"CACAO" | "CAFE" | "ANACARDE", string> = {
+  CACAO: "Cacao",
+  CAFE: "Café",
+  ANACARDE: "Anacarde",
+};
 
 export const metadata = {
   title: "Saisie rapide — SOCOPAD",
@@ -144,6 +152,29 @@ export default async function PageSaisieRapide() {
           {magasin.ville} — {magasin.region.nom}
         </p>
       </header>
+
+      {/* Stocks courants par filière (dernière clôture validée) */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        {lignes.map((l) => {
+          const code = l.produit.code as "CACAO" | "CAFE" | "ANACARDE";
+          return (
+            <Card key={l.produit.id}>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Package className="size-3.5" />
+                  <span>{LIBELLE_FILIERE[code]}</span>
+                </div>
+                <div className="mt-1 text-lg sm:text-xl font-bold tabular-nums">
+                  {formatNombre(Math.round(l.dernierStockKg))}
+                  <span className="ml-1 text-xs font-normal text-muted-foreground">
+                    kg
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
       <FormSaisieRapide dateIso={dateIso} lignes={lignes} />
     </div>
