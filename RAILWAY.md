@@ -78,8 +78,8 @@ Vérification : dans Railway, ouvrir le service Postgres → **Data** → tu doi
 ## ⚠️ Sécurité — à faire après le premier déploiement
 
 **Changer immédiatement les mots de passe seedés** :
-1. Connexion sur https://socopad.com avec `admin@socopad.ci` / `Admin#2026`
-2. Aller sur **/profil** → changer son mot de passe
+1. Connexion sur https://socopad.com avec le compte admin de seed (identifiants listés dans `README.md` — section « Comptes de test »).
+2. Aller sur **/profil** → changer son mot de passe.
 3. Aller sur **/utilisateurs** → pour chaque compte (manager + responsables magasin), cliquer **Réinitialiser le mot de passe** et générer un MDP fort, puis le communiquer hors-bande à la personne concernée.
 
 ---

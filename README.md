@@ -114,13 +114,18 @@ Voir `.env.example` pour le détail.
 | `RESPONSABLE_MAGASIN` | Saisie + validation sur SON magasin uniquement              |
 | `OPERATEUR_SAISIE`    | Saisie uniquement (pas de validation)                       |
 
-## 🧪 Comptes de test (après seed — Itération 2)
+## 🧪 Comptes de test (DEV uniquement)
 
-| Email                    | Mot de passe   | Rôle               |
-| ------------------------ | -------------- | ------------------ |
-| `admin@socopad.ci`       | `Admin#2026`   | ADMIN              |
-| `manager.sud@socopad.ci` | `Manager#2026` | MANAGER_REGIONAL   |
-| `mag.abidjan@socopad.ci` | `Magasin#2026` | RESPONSABLE_MAGASIN |
+> ⚠️ **Changer ces identifiants AVANT tout déploiement en production.**
+> Ces comptes existent uniquement après exécution du seed (`npm run db:seed`)
+> sur une base de développement. Ils ne doivent jamais subsister tels quels
+> en prod — voir la section sécurité de `DEPLOIEMENT.md`.
+
+| Email                    | Mot de passe   | Rôle                 |
+| ------------------------ | -------------- | -------------------- |
+| `admin@socopad.ci`       | `Admin#2026`   | ADMIN                |
+| `manager.sud@socopad.ci` | `Manager#2026` | MANAGER_REGIONAL     |
+| `mag.abidjan@socopad.ci` | `Magasin#2026` | RESPONSABLE_MAGASIN  |
 
 ## 📜 Scripts npm
 

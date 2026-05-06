@@ -70,7 +70,7 @@ export function FormConnexion({ retour }: { retour?: string }) {
             />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3 mt-2">
+        <CardFooter className="mt-2">
           <Button type="submit" className="w-full" disabled={enCours} size="lg">
             {enCours ? (
               <>
@@ -84,11 +84,6 @@ export function FormConnexion({ retour }: { retour?: string }) {
               </>
             )}
           </Button>
-          <p className="text-xs text-center text-muted-foreground">
-            Comptes de test seedés :{" "}
-            <code className="font-mono">admin@socopad.ci</code> /{" "}
-            <code className="font-mono">Admin#2026</code>
-          </p>
         </CardFooter>
       </form>
     </Card>

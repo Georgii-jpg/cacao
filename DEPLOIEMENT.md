@@ -95,7 +95,7 @@ git push -u origin main
 
 Une fois déployé, votre app est accessible sur `https://cacao.vercel.app` (ou un nom proche selon disponibilité).
 
-> 🔒 **Important** : changer immédiatement les mots de passe par défaut des comptes seedés (`Admin#2026`, etc.) via la page `/utilisateurs`. Le compte `admin@socopad.ci` ne doit **jamais** rester avec son MDP de seed en production.
+> 🔒 **Important** : changer immédiatement les mots de passe par défaut des comptes seedés via la page `/utilisateurs`. Le compte admin ne doit **jamais** rester avec son MDP de seed en production. Les identifiants de seed sont listés uniquement dans `README.md` (section « Comptes de test »).
 
 ---
 
@@ -145,7 +145,7 @@ Supabase fait des sauvegardes quotidiennes automatiques sur le plan Free (7 jour
 - [ ] Migrations appliquées sur Supabase (`prisma migrate deploy`)
 - [ ] Seed exécuté **une seule fois** (sinon dédupliquer)
 - [ ] Mot de passe admin changé après première connexion
-- [ ] Mots de passe seedés (`Admin#2026`, `Manager#2026`, `Magasin#2026`) **tous remplacés**
+- [ ] Mots de passe seedés **tous remplacés** (cf. liste dans `README.md`)
 - [ ] Domaine personnalisé configuré (optionnel)
 - [ ] Sauvegardes Supabase activées (par défaut sur Free)
 
