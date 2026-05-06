@@ -38,12 +38,6 @@ export const itemsNavigation: ReadonlyArray<ItemNavigation> = [
     roles: ["RESPONSABLE_MAGASIN", "OPERATEUR_SAISIE"],
   },
   {
-    href: "/stocks",
-    libelle: "Stocks",
-    icone: "package",
-    roles: ["ADMIN", "MANAGER_REGIONAL"],
-  },
-  {
     href: "/suivi-stock",
     libelle: "Suivi stock",
     icone: "bar-chart",
