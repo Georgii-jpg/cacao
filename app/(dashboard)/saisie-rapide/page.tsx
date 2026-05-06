@@ -140,19 +140,6 @@ export default async function PageSaisieRapide() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 p-4 pb-24">
-      <header className="space-y-1">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <ClipboardCheck className="size-4" />
-          <span>Saisie du jour</span>
-        </div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {magasin.nom}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {magasin.ville} — {magasin.region.nom}
-        </p>
-      </header>
-
       {/* Stocks courants par filière (dernière clôture validée) */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {lignes.map((l) => {
@@ -175,6 +162,19 @@ export default async function PageSaisieRapide() {
           );
         })}
       </div>
+
+      <header className="space-y-1">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <ClipboardCheck className="size-4" />
+          <span>Saisie du jour</span>
+        </div>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {magasin.nom}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {magasin.ville} — {magasin.region.nom}
+        </p>
+      </header>
 
       <FormSaisieRapide dateIso={dateIso} lignes={lignes} />
     </div>
