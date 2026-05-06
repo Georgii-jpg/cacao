@@ -1,5 +1,6 @@
 // Tableau de bord centralisé — KPIs, graphiques et alertes adaptés au rôle.
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Building2,
   Package,
@@ -41,6 +42,13 @@ export const dynamic = "force-dynamic";
 export default async function PageDashboard() {
   const session = await exigerAuth();
   const role = session.user.role as RoleApp | undefined;
+
+  // Les magasiniers n'ont pas de tableau de bord — on les renvoie sur leur
+  // page principale (saisie rapide).
+  if (role === "RESPONSABLE_MAGASIN" || role === "OPERATEUR_SAISIE") {
+    redirect("/saisie-rapide");
+  }
+
   const prenom = session.user.name?.split(" ")[0] ?? "";
 
   const ctx = {

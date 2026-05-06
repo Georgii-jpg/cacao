@@ -28,7 +28,7 @@ export const itemsNavigation: ReadonlyArray<ItemNavigation> = [
     href: "/dashboard",
     libelle: "Tableau de bord",
     icone: "home",
-    roles: ["ADMIN", "MANAGER_REGIONAL", "RESPONSABLE_MAGASIN", "OPERATEUR_SAISIE"],
+    roles: ["ADMIN", "MANAGER_REGIONAL"],
   },
   {
     href: "/saisie-rapide",
@@ -40,7 +40,7 @@ export const itemsNavigation: ReadonlyArray<ItemNavigation> = [
     href: "/stocks",
     libelle: "Stocks",
     icone: "package",
-    roles: ["ADMIN", "MANAGER_REGIONAL", "RESPONSABLE_MAGASIN", "OPERATEUR_SAISIE"],
+    roles: ["ADMIN", "MANAGER_REGIONAL"],
   },
   {
     href: "/magasins",
