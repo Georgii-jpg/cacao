@@ -93,12 +93,7 @@ export default async function PageDashboard() {
 
       {/* KPIs principaux ─────────────────────────────────────────── */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
-        <KpiCard
-          libelle="Magasins actifs"
-          valeur={`${kpis.magasinsActifs}`}
-          sousTexte={`sur ${kpis.magasinsTotal} au total`}
-          icone={<Building2 className="h-4 w-4 text-muted-foreground" />}
-        />
+        {/* Ligne 1 : stock par filière */}
         <KpiCard
           libelle="Stock total Cacao"
           valeur={`${formatNombre(Math.round(kpis.stockParCode.CACAO))} kg`}
@@ -116,6 +111,13 @@ export default async function PageDashboard() {
           valeur={`${formatNombre(Math.round(kpis.stockParCode.ANACARDE))} kg`}
           sousTexte="dernières clôtures validées"
           icone={<Package className="h-4 w-4 text-muted-foreground" />}
+        />
+        {/* Ligne 2 : indicateurs opérationnels */}
+        <KpiCard
+          libelle="Magasins actifs"
+          valeur={`${kpis.magasinsActifs}`}
+          sousTexte={`sur ${kpis.magasinsTotal} au total`}
+          icone={<Building2 className="h-4 w-4 text-muted-foreground" />}
         />
         <KpiCard
           libelle="Remontées du jour"
