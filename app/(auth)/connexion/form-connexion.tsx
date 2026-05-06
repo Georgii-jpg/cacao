@@ -54,7 +54,7 @@ export function FormConnexion({ retour }: { retour?: string }) {
               type="email"
               autoComplete="email"
               required
-              placeholder="admin@socopad.ci"
+              placeholder="Adresse mail"
               disabled={enCours}
             />
           </div>
