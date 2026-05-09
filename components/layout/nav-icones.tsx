@@ -11,6 +11,7 @@ import {
   Settings,
   ClipboardCheck,
   BarChart3,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import type { IdIcone } from "@/lib/navigation";
@@ -24,6 +25,7 @@ const ICONES: Record<IdIcone, LucideIcon> = {
   settings: Settings,
   "clipboard-check": ClipboardCheck,
   "bar-chart": BarChart3,
+  wallet: Wallet,
 };
 
 export function IconeNav({
