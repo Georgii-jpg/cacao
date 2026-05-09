@@ -7,21 +7,29 @@
 //   3. Crée ou met à jour la fiche du jour (magasin × produit × date),
 //      directement en statut SOUMIS pour validation manager.
 // Refus si la fiche du jour est déjà SOUMIS ou VALIDE (pas de double saisie).
+//
+// Gère également la fiche caisse du jour (encaissements / décaissements /
+// solde) — même workflow, même règle d'unicité (magasin × jour).
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { prisma } from "@/lib/db/prisma";
 import { exigerAuth } from "@/lib/auth/require";
 import { permissions, type RoleApp } from "@/lib/auth/permissions";
-import { schemaSaisieRapide } from "@/lib/validations/saisie-rapide";
+import {
+  schemaSaisieRapide,
+  type EntreesCaisseSaisieRapide,
+} from "@/lib/validations/saisie-rapide";
 import { dateMetier, dateAujourdhui } from "./queries";
 
 export type EtatActionSaisieRapide = {
   ok: boolean;
   erreur: string | null;
   erreursChamps?: Record<string, string>;
-  /// Nombre de fiches créées/mises à jour avec succès
+  /// Nombre de fiches stock créées/mises à jour avec succès
   nbTraitees?: number;
+  /// La fiche caisse a-t-elle été soumise lors de cet appel ?
+  caisseTraitee?: boolean;
 };
 
 const ETAT_VIDE: EtatActionSaisieRapide = { ok: false, erreur: null };
@@ -33,6 +41,30 @@ function aplatErreurs(err: z.ZodError): Record<string, string> {
     if (!out[champ]) out[champ] = issue.message;
   }
   return out;
+}
+
+/**
+ * Reconstruit le bloc caisse depuis le FormData. Conventions :
+ *   `caisse.encaissementsFcfa`, `caisse.decaissementsFcfa`, `caisse.soldeFcfa`.
+ * Si aucun des trois champs n'est rempli, retourne null (bloc ignoré).
+ */
+function caisseDepuisFormData(formData: FormData): EntreesCaisseSaisieRapide | null {
+  const enc = formData.get("caisse.encaissementsFcfa");
+  const dec = formData.get("caisse.decaissementsFcfa");
+  const sol = formData.get("caisse.soldeFcfa");
+  const encRempli = enc !== null && String(enc) !== "";
+  const decRempli = dec !== null && String(dec) !== "";
+  const solRempli = sol !== null && String(sol) !== "";
+  if (!encRempli && !decRempli && !solRempli) return null;
+  const num = (v: FormDataEntryValue | null) => {
+    const n = Number(v ?? "0");
+    return Number.isFinite(n) ? n : 0;
+  };
+  return {
+    encaissementsFcfa: num(enc),
+    decaissementsFcfa: num(dec),
+    soldeFcfa: num(sol),
+  };
 }
 
 /**
@@ -99,8 +131,9 @@ export async function enregistrerSaisieRapide(
 
   const dateRaw = String(formData.get("date") ?? "");
   const lignes = lignesDepuisFormData(formData);
+  const caisse = caisseDepuisFormData(formData);
 
-  const parsed = schemaSaisieRapide.safeParse({ date: dateRaw, lignes });
+  const parsed = schemaSaisieRapide.safeParse({ date: dateRaw, lignes, caisse });
   if (!parsed.success) {
     return {
       ...ETAT_VIDE,
@@ -250,6 +283,81 @@ export async function enregistrerSaisieRapide(
     nbTraitees++;
   }
 
+  // ─── Bloc caisse ──────────────────────────────────────────────────────
+  let caisseTraitee = false;
+  let erreurCaisse: string | null = null;
+  if (data.caisse) {
+    const caisseExistante = await prisma.caisse.findUnique({
+      where: { magasinId_date: { magasinId, date: dateJ } },
+    });
+
+    if (
+      caisseExistante &&
+      (caisseExistante.statut === "SOUMIS" || caisseExistante.statut === "VALIDE")
+    ) {
+      erreurCaisse =
+        caisseExistante.statut === "SOUMIS"
+          ? "Une fiche caisse est déjà en attente de validation pour aujourd'hui."
+          : "La caisse du jour est déjà validée.";
+    } else if (caisseExistante) {
+      // Ré-soumission après BROUILLON / REJETE
+      await prisma.$transaction([
+        prisma.caisse.update({
+          where: { id: caisseExistante.id },
+          data: {
+            encaissementsFcfa: data.caisse.encaissementsFcfa,
+            decaissementsFcfa: data.caisse.decaissementsFcfa,
+            soldeFcfa: data.caisse.soldeFcfa,
+            statut: "SOUMIS",
+            motifRejet: null,
+            valideParId: null,
+            valideLe: null,
+          },
+        }),
+        prisma.auditLog.create({
+          data: {
+            userId: session.user.id,
+            action: "SOUMISSION",
+            entite: "Caisse",
+            entiteId: caisseExistante.id,
+            ancienneValeur: JSON.stringify(caisseExistante),
+            nouvelleValeur: JSON.stringify({
+              source: "saisie-rapide",
+              ...data.caisse,
+            }),
+          },
+        }),
+      ]);
+      caisseTraitee = true;
+    } else {
+      const fiche = await prisma.caisse.create({
+        data: {
+          magasinId,
+          date: dateJ,
+          encaissementsFcfa: data.caisse.encaissementsFcfa,
+          decaissementsFcfa: data.caisse.decaissementsFcfa,
+          soldeFcfa: data.caisse.soldeFcfa,
+          statut: "SOUMIS",
+          saisiParId: session.user.id,
+          saisiLe: new Date(),
+        },
+      });
+      await prisma.auditLog.create({
+        data: {
+          userId: session.user.id,
+          action: "SOUMISSION",
+          entite: "Caisse",
+          entiteId: fiche.id,
+          nouvelleValeur: JSON.stringify({
+            source: "saisie-rapide",
+            ...data.caisse,
+          }),
+        },
+      });
+      caisseTraitee = true;
+    }
+  }
+
   revalidatePath("/saisie-rapide");
   revalidatePath("/stocks");
   revalidatePath("/stocks/historique");
@@ -257,16 +365,36 @@ export async function enregistrerSaisieRapide(
   revalidatePath("/dashboard");
   revalidatePath(`/magasins/${magasinId}`);
 
-  if (nbTraitees === 0 && erreursLignes.length > 0) {
-    return { ...ETAT_VIDE, erreur: erreursLignes[0] };
+  if (nbTraitees === 0 && !caisseTraitee) {
+    if (erreursLignes.length > 0) {
+      return { ...ETAT_VIDE, erreur: erreursLignes[0] };
+    }
+    if (erreurCaisse) {
+      return { ...ETAT_VIDE, erreur: erreurCaisse };
+    }
   }
+
+  // Compose un message récapitulatif
+  const morceaux: string[] = [];
+  if (nbTraitees > 0) {
+    morceaux.push(
+      `${nbTraitees} saisie${nbTraitees > 1 ? "s" : ""} stock transmise${nbTraitees > 1 ? "s" : ""}`,
+    );
+  }
+  if (caisseTraitee) {
+    morceaux.push("caisse transmise");
+  }
+  const messages: string[] = [];
+  if (morceaux.length > 0) messages.push(`${morceaux.join(" + ")}.`);
+  if (erreursLignes.length > 0) {
+    messages.push(`${erreursLignes.length} stock(s) ignoré(s) (déjà soumis).`);
+  }
+  if (erreurCaisse) messages.push(erreurCaisse);
 
   return {
     ok: true,
-    erreur:
-      erreursLignes.length > 0
-        ? `${nbTraitees} saisie(s) transmise(s). ${erreursLignes.length} ignorée(s) (déjà soumise(s)).`
-        : null,
+    erreur: messages.length > 0 ? messages.join(" ") : null,
     nbTraitees,
+    caisseTraitee,
   };
 }

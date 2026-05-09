@@ -79,45 +79,61 @@ export default async function PageSaisieRapide() {
 
   // Pour chaque produit : dernier stock validé connu + fiche du jour
   // (utile pour bloquer la double saisie ou pré-remplir si rejetée).
-  const lignes = await Promise.all(
-    produits.map(async (p) => {
-      const [dernierValide, fiche] = await Promise.all([
-        prisma.stock.findFirst({
-          where: {
-            magasinId,
-            produitId: p.id,
-            statut: "VALIDE",
-            date: { lt: ajd },
-          },
-          orderBy: { date: "desc" },
-          select: { stockClotureKg: true, date: true },
-        }),
-        prisma.stock.findUnique({
-          where: {
-            magasinId_produitId_date: {
+  // En parallèle : fiche caisse du jour pour ce magasin.
+  const [lignes, ficheCaisse] = await Promise.all([
+    Promise.all(
+      produits.map(async (p) => {
+        const [dernierValide, fiche] = await Promise.all([
+          prisma.stock.findFirst({
+            where: {
               magasinId,
               produitId: p.id,
-              date: ajd,
+              statut: "VALIDE",
+              date: { lt: ajd },
             },
-          },
-          select: {
-            id: true,
-            statut: true,
-            entreesKg: true,
-            stockClotureKg: true,
-            motifRejet: true,
-          },
-        }),
-      ]);
+            orderBy: { date: "desc" },
+            select: { stockClotureKg: true, date: true },
+          }),
+          prisma.stock.findUnique({
+            where: {
+              magasinId_produitId_date: {
+                magasinId,
+                produitId: p.id,
+                date: ajd,
+              },
+            },
+            select: {
+              id: true,
+              statut: true,
+              entreesKg: true,
+              stockClotureKg: true,
+              motifRejet: true,
+            },
+          }),
+        ]);
 
-      return {
-        produit: p,
-        dernierStockKg: dernierValide?.stockClotureKg ?? 0,
-        dernierStockDate: dernierValide?.date ?? null,
-        fiche,
-      };
+        return {
+          produit: p,
+          dernierStockKg: dernierValide?.stockClotureKg ?? 0,
+          dernierStockDate: dernierValide?.date ?? null,
+          fiche,
+        };
+      }),
+    ),
+    prisma.caisse.findUnique({
+      where: {
+        magasinId_date: { magasinId, date: ajd },
+      },
+      select: {
+        id: true,
+        statut: true,
+        encaissementsFcfa: true,
+        decaissementsFcfa: true,
+        soldeFcfa: true,
+        motifRejet: true,
+      },
     }),
-  );
+  ]);
 
   if (lignes.length === 0) {
     return (
@@ -176,7 +192,11 @@ export default async function PageSaisieRapide() {
         </p>
       </header>
 
-      <FormSaisieRapide dateIso={dateIso} lignes={lignes} />
+      <FormSaisieRapide
+        dateIso={dateIso}
+        lignes={lignes}
+        ficheCaisse={ficheCaisse}
+      />
     </div>
   );
 }

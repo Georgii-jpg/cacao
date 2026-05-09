@@ -129,6 +129,9 @@ model Magasin {
   mouvementsSrc   MouvementStock[] @relation("MouvementSource")
   mouvementsDest  MouvementStock[] @relation("MouvementDestination")
 
+  /// États journaliers de caisse (un par jour)
+  caisses         Caisse[]
+
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -166,6 +169,10 @@ model User {
   stocksSaisis    Stock[]            @relation("StockSaisiPar")
   stocksValides   Stock[]            @relation("StockValidePar")
   mouvementsSaisis MouvementStock[]  @relation("MouvementSaisiPar")
+
+  /// Saisies & validations de caisse dont il est l'auteur
+  caissesSaisies  Caisse[]           @relation("CaisseSaisiPar")
+  caissesValidees Caisse[]           @relation("CaisseValidePar")
 
   /// Journal d'audit (actions de l'utilisateur)
   auditLogs       AuditLog[]
@@ -296,6 +303,54 @@ model MouvementStock {
   @@index([type])
   @@index([dateMvt])
   @@map("mouvements_stock")
+}
+
+// ─── DOMAINE CAISSE ────────────────────────────────────────────────────
+
+/// État journalier de la caisse d'un magasin (encaissements / décaissements
+/// / solde). Une ligne par (magasin, jour). Réutilise le workflow de
+/// validation StatutStock — sémantique identique (BROUILLON → SOUMIS →
+/// VALIDE / REJETE).
+model Caisse {
+  id              String      @id @default(cuid())
+
+  magasinId       String
+  magasin         Magasin     @relation(fields: [magasinId], references: [id])
+
+  /// Date métier (00:00 UTC du jour concerné)
+  date            DateTime
+
+  /// Montants en FCFA (XOF n'a pas de décimales en Côte d'Ivoire,
+  /// mais on stocke en Float pour rester homogène avec les Floats de Stock)
+  encaissementsFcfa Float     @default(0)
+  decaissementsFcfa Float     @default(0)
+  /// Solde en caisse en fin de journée
+  soldeFcfa         Float     @default(0)
+
+  notes           String?
+
+  /// Workflow validation (réutilise StatutStock — workflow identique)
+  statut          StatutStock @default(BROUILLON)
+
+  saisiParId      String
+  saisiPar        User        @relation("CaisseSaisiPar", fields: [saisiParId], references: [id])
+  saisiLe         DateTime    @default(now())
+
+  valideParId     String?
+  validePar       User?       @relation("CaisseValidePar", fields: [valideParId], references: [id])
+  valideLe        DateTime?
+
+  motifRejet      String?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  /// Pas plus d'une fiche caisse par (magasin × jour)
+  @@unique([magasinId, date])
+  @@index([date])
+  @@index([statut])
+  @@index([magasinId, date])
+  @@map("caisses")
 }
 
 // ─── DOMAINE AUDIT ─────────────────────────────────────────────────────

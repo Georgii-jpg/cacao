@@ -2,9 +2,18 @@
 // Formulaire de saisie rapide (mode mobile magasinier).
 // Une carte par produit, avec 2 champs : acheté aujourd'hui + stock total
 // actuel. Pour les produits déjà soumis/validés aujourd'hui : lecture seule.
+// En complément : un bloc "Caisse du jour" avec encaissements / décaissements
+// / solde, soumis dans le même envoi.
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Loader2, Send, AlertCircle, AlertTriangle } from "lucide-react";
+import {
+  CheckCircle2,
+  Loader2,
+  Send,
+  AlertCircle,
+  AlertTriangle,
+  Wallet,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -22,7 +31,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatPoidsKg } from "@/lib/utils/format";
+import { formatFCFA, formatPoidsKg } from "@/lib/utils/format";
 import type { StatutStock } from "@/app/generated/prisma/enums";
 
 const ETAT_INITIAL: EtatActionSaisieRapide = { ok: false, erreur: null };
@@ -50,12 +59,22 @@ type Ligne = {
   fiche: FicheJour;
 };
 
+type FicheCaisse = {
+  id: string;
+  statut: StatutStock;
+  encaissementsFcfa: number;
+  decaissementsFcfa: number;
+  soldeFcfa: number;
+  motifRejet: string | null;
+} | null;
+
 type Props = {
   dateIso: string;
   lignes: Ligne[];
+  ficheCaisse: FicheCaisse;
 };
 
-export function FormSaisieRapide({ dateIso, lignes }: Props) {
+export function FormSaisieRapide({ dateIso, lignes, ficheCaisse }: Props) {
   const router = useRouter();
   const [etat, formAction, enCours] = useActionState(
     enregistrerSaisieRapide,
@@ -65,6 +84,21 @@ export function FormSaisieRapide({ dateIso, lignes }: Props) {
   // Saisies locales (par produitId)
   const [achetes, setAchetes] = useState<Record<string, string>>({});
   const [stocksActuels, setStocksActuels] = useState<Record<string, string>>({});
+
+  // Saisies caisse
+  const [encaissements, setEncaissements] = useState("");
+  const [decaissements, setDecaissements] = useState("");
+  const [soldeCaisse, setSoldeCaisse] = useState("");
+
+  const caisseVerrouillee = estCaisseVerrouillee(ficheCaisse);
+  const caisseRemplie = useMemo(
+    () =>
+      !caisseVerrouillee &&
+      [encaissements, decaissements, soldeCaisse].some(
+        (v) => v.trim() !== "",
+      ),
+    [caisseVerrouillee, encaissements, decaissements, soldeCaisse],
+  );
 
   // Combien de lignes ont au moins un champ rempli (compteur en bas)
   const nbRemplies = useMemo(() => {
@@ -78,6 +112,8 @@ export function FormSaisieRapide({ dateIso, lignes }: Props) {
     return n;
   }, [achetes, stocksActuels, lignes]);
 
+  const totalElementsRemplis = nbRemplies + (caisseRemplie ? 1 : 0);
+
   useEffect(() => {
     if (etat.ok) {
       toast.success(
@@ -86,6 +122,9 @@ export function FormSaisieRapide({ dateIso, lignes }: Props) {
       );
       setAchetes({});
       setStocksActuels({});
+      setEncaissements("");
+      setDecaissements("");
+      setSoldeCaisse("");
       router.refresh();
     } else if (etat.erreur) {
       toast.error(etat.erreur);
@@ -120,6 +159,16 @@ export function FormSaisieRapide({ dateIso, lignes }: Props) {
             }
           />
         ))}
+
+        <CarteCaisse
+          fiche={ficheCaisse}
+          encaissements={encaissements}
+          decaissements={decaissements}
+          solde={soldeCaisse}
+          onEncaissementsChange={setEncaissements}
+          onDecaissementsChange={setDecaissements}
+          onSoldeChange={setSoldeCaisse}
+        />
       </div>
 
       {/* Barre d'action sticky en bas (mobile-friendly) */}
@@ -129,7 +178,7 @@ export function FormSaisieRapide({ dateIso, lignes }: Props) {
             type="submit"
             size="lg"
             className="h-14 w-full text-base"
-            disabled={enCours || nbRemplies === 0}
+            disabled={enCours || totalElementsRemplis === 0}
           >
             {enCours ? (
               <>
@@ -140,8 +189,8 @@ export function FormSaisieRapide({ dateIso, lignes }: Props) {
               <>
                 <Send className="size-5" />
                 Envoyer{" "}
-                {nbRemplies > 0
-                  ? `(${nbRemplies} produit${nbRemplies > 1 ? "s" : ""})`
+                {totalElementsRemplis > 0
+                  ? `(${libelleRecap(nbRemplies, caisseRemplie)})`
                   : ""}
               </>
             )}
@@ -153,6 +202,15 @@ export function FormSaisieRapide({ dateIso, lignes }: Props) {
       </div>
     </form>
   );
+}
+
+function libelleRecap(nbProduits: number, caisse: boolean): string {
+  const parts: string[] = [];
+  if (nbProduits > 0) {
+    parts.push(`${nbProduits} produit${nbProduits > 1 ? "s" : ""}`);
+  }
+  if (caisse) parts.push("caisse");
+  return parts.join(" + ");
 }
 
 // ─── Sous-composant : une carte produit ─────────────────────────────────
@@ -287,4 +345,137 @@ function BadgeStatut({ statut }: { statut: StatutStock }) {
 
 function estVerrouillee(fiche: FicheJour): boolean {
   return !!fiche && (fiche.statut === "SOUMIS" || fiche.statut === "VALIDE");
+}
+
+function estCaisseVerrouillee(fiche: FicheCaisse): boolean {
+  return !!fiche && (fiche.statut === "SOUMIS" || fiche.statut === "VALIDE");
+}
+
+// ─── Sous-composant : carte caisse du jour ──────────────────────────────
+
+function CarteCaisse({
+  fiche,
+  encaissements,
+  decaissements,
+  solde,
+  onEncaissementsChange,
+  onDecaissementsChange,
+  onSoldeChange,
+}: {
+  fiche: FicheCaisse;
+  encaissements: string;
+  decaissements: string;
+  solde: string;
+  onEncaissementsChange: (v: string) => void;
+  onDecaissementsChange: (v: string) => void;
+  onSoldeChange: (v: string) => void;
+}) {
+  const verrouillee = estCaisseVerrouillee(fiche);
+
+  return (
+    <Card className={verrouillee ? "opacity-90" : ""}>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Wallet className="size-5" />
+            Caisse du jour
+          </CardTitle>
+          {verrouillee && <BadgeStatut statut={fiche!.statut} />}
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-3">
+        {verrouillee ? (
+          <ContenuCaisseVerrouille fiche={fiche!} />
+        ) : (
+          <>
+            {fiche?.statut === "REJETE" && fiche.motifRejet && (
+              <Alert>
+                <AlertTriangle className="size-4" />
+                <AlertTitle>Saisie caisse précédente rejetée</AlertTitle>
+                <AlertDescription>
+                  Motif&nbsp;: {fiche.motifRejet}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="caisse-encaissements">
+                  Encaissements (FCFA)
+                </Label>
+                <Input
+                  id="caisse-encaissements"
+                  name="caisse.encaissementsFcfa"
+                  type="number"
+                  inputMode="numeric"
+                  step="1"
+                  min="0"
+                  placeholder="0"
+                  value={encaissements}
+                  onChange={(e) => onEncaissementsChange(e.target.value)}
+                  className="h-12 text-lg"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="caisse-decaissements">
+                  Décaissements (FCFA)
+                </Label>
+                <Input
+                  id="caisse-decaissements"
+                  name="caisse.decaissementsFcfa"
+                  type="number"
+                  inputMode="numeric"
+                  step="1"
+                  min="0"
+                  placeholder="0"
+                  value={decaissements}
+                  onChange={(e) => onDecaissementsChange(e.target.value)}
+                  className="h-12 text-lg"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="caisse-solde">Solde en caisse (FCFA)</Label>
+                <Input
+                  id="caisse-solde"
+                  name="caisse.soldeFcfa"
+                  type="number"
+                  inputMode="numeric"
+                  step="1"
+                  min="0"
+                  placeholder="0"
+                  value={solde}
+                  onChange={(e) => onSoldeChange(e.target.value)}
+                  className="h-12 text-lg"
+                />
+              </div>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ContenuCaisseVerrouille({
+  fiche,
+}: {
+  fiche: NonNullable<FicheCaisse>;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-3 text-sm">
+      <div>
+        <p className="text-muted-foreground">Encaissements</p>
+        <p className="font-medium">{formatFCFA(fiche.encaissementsFcfa)}</p>
+      </div>
+      <div>
+        <p className="text-muted-foreground">Décaissements</p>
+        <p className="font-medium">{formatFCFA(fiche.decaissementsFcfa)}</p>
+      </div>
+      <div>
+        <p className="text-muted-foreground">Solde</p>
+        <p className="font-medium">{formatFCFA(fiche.soldeFcfa)}</p>
+      </div>
+    </div>
+  );
 }
