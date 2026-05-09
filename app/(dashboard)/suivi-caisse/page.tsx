@@ -18,6 +18,7 @@ import {
 import { prisma } from "@/lib/db/prisma";
 import { formatFCFA, formatDate } from "@/lib/utils/format";
 import { BadgeStatutStock } from "@/components/stocks/badge-statut-stock";
+import { ActionsValidationCaisse } from "@/components/caisses/actions-validation";
 import {
   Card,
   CardContent,
@@ -107,6 +108,7 @@ export default async function PageSuiviCaisse() {
         encaissementsFcfa: true,
         decaissementsFcfa: true,
         soldeFcfa: true,
+        saisiParId: true,
         magasin: { select: { id: true, nom: true, code: true } },
         saisiPar: { select: { nom: true, prenom: true } },
       },
@@ -284,6 +286,7 @@ export default async function PageSuiviCaisse() {
                   </TableHead>
                   <TableHead className="text-right">Solde</TableHead>
                   <TableHead>Saisi par</TableHead>
+                  <TableHead className="text-right w-44">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -319,6 +322,14 @@ export default async function PageSuiviCaisse() {
                         {formatFCFA(f.soldeFcfa)}
                       </TableCell>
                       <TableCell className="text-xs">{saisisseur}</TableCell>
+                      <TableCell>
+                        <ActionsValidationCaisse
+                          caisseId={f.id}
+                          estAuteur={f.saisiParId === session.user.id}
+                          estAdmin={role === "ADMIN"}
+                          compact
+                        />
+                      </TableCell>
                     </TableRow>
                   );
                 })}
