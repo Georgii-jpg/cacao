@@ -290,3 +290,102 @@ export async function rejeterCaisse(
   revalider(fiche.magasinId);
   return { ok: true, erreur: null, caisseId };
 }
+
+// ─── REJETER EN MASSE ───────────────────────────────────────────────────
+
+/**
+ * Rejette d'un coup toutes les fiches SOUMIS du périmètre de l'utilisateur,
+ * avec un motif unique appliqué à toutes. Un non-admin ne peut pas rejeter
+ * ses propres saisies (elles restent SOUMIS et sont comptées séparément).
+ */
+export async function rejeterToutesCaissesEnAttente(
+  motifRaw: string,
+): Promise<EtatActionBulkCaisse> {
+  const session = await exigerAuth();
+  const role = session.user.role as RoleApp | undefined;
+  if (!permissions.validerStock(role)) {
+    return { ok: false, erreur: "Permission de validation requise." };
+  }
+
+  const parsed = schemaRejet.safeParse({ motifRejet: motifRaw });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      erreur:
+        parsed.error.issues[0]?.message ?? "Motif de rejet invalide.",
+    };
+  }
+  const motif = parsed.data.motifRejet;
+
+  const portee = filtreMagasinPourUtilisateur({
+    role,
+    magasinId: session.user.magasinId ?? null,
+    regionId: session.user.regionId ?? null,
+  });
+  if (portee === null) {
+    return { ok: false, erreur: "Aucun magasin accessible avec votre rôle." };
+  }
+
+  const wherePortee: Record<string, unknown> = {};
+  if (portee.id) wherePortee.magasinId = portee.id;
+  if (portee.regionId) wherePortee.magasin = { regionId: portee.regionId };
+
+  const whereCandidates: Record<string, unknown> = {
+    ...wherePortee,
+    statut: "SOUMIS",
+  };
+  if (role !== "ADMIN") {
+    whereCandidates.saisiParId = { not: session.user.id };
+  }
+
+  const candidates = await prisma.caisse.findMany({
+    where: whereCandidates,
+    select: { id: true, magasinId: true },
+  });
+
+  let nbIgnorees = 0;
+  if (role !== "ADMIN") {
+    nbIgnorees = await prisma.caisse.count({
+      where: { ...wherePortee, statut: "SOUMIS", saisiParId: session.user.id },
+    });
+  }
+
+  if (candidates.length === 0) {
+    return { ok: true, erreur: null, nbValidees: 0, nbIgnorees };
+  }
+
+  const ids = candidates.map((c) => c.id);
+  const auditPayload = JSON.stringify({ motifRejet: motif });
+  const auditRows = candidates.map((c) => ({
+    userId: session.user.id,
+    action: "REJET" as const,
+    entite: "Caisse",
+    entiteId: c.id,
+    nouvelleValeur: auditPayload,
+  }));
+
+  const [updateResult] = await prisma.$transaction([
+    prisma.caisse.updateMany({
+      where: { id: { in: ids }, statut: "SOUMIS" },
+      data: {
+        statut: "REJETE",
+        motifRejet: motif,
+        valideParId: null,
+        valideLe: null,
+      },
+    }),
+    prisma.auditLog.createMany({ data: auditRows }),
+  ]);
+
+  const magasinsAffectes = [...new Set(candidates.map((c) => c.magasinId))];
+  for (const m of magasinsAffectes) revalider(m);
+
+  return {
+    ok: true,
+    erreur: null,
+    /// On réutilise le champ nbValidees pour transporter le compteur
+    /// (sémantique = nb de fiches traitées par cette action en masse).
+    nbValidees: updateResult.count,
+    nbIgnorees,
+  };
+}

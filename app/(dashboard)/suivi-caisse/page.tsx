@@ -20,6 +20,7 @@ import { formatFCFA, formatDate } from "@/lib/utils/format";
 import { BadgeStatutStock } from "@/components/stocks/badge-statut-stock";
 import { ActionsValidationCaisse } from "@/components/caisses/actions-validation";
 import { BoutonToutValider } from "@/components/caisses/bouton-tout-valider";
+import { BoutonToutRejeter } from "@/components/caisses/bouton-tout-rejeter";
 import {
   Card,
   CardContent,
@@ -269,12 +270,15 @@ export default async function PageSuiviCaisse() {
       {/* File des fiches en attente */}
       {enAttente.length > 0 && (
         <section className="space-y-2">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-amber-600" />
               En attente de validation ({enAttente.length})
             </h2>
-            <BoutonToutValider nbEnAttente={enAttente.length} />
+            <div className="flex items-center gap-2">
+              <BoutonToutRejeter nbEnAttente={enAttente.length} />
+              <BoutonToutValider nbEnAttente={enAttente.length} />
+            </div>
           </div>
           <div className="rounded-lg border bg-card">
             <Table>
