@@ -23,6 +23,15 @@ export type EtatActionCaisse = {
   caisseId?: string;
 };
 
+export type EtatActionBulkCaisse = {
+  ok: boolean;
+  erreur: string | null;
+  /// Nombre de fiches effectivement validées
+  nbValidees?: number;
+  /// Nombre ignorées (saisies par l'utilisateur courant — non-admin)
+  nbIgnorees?: number;
+};
+
 const ETAT_VIDE: EtatActionCaisse = { ok: false, erreur: null };
 
 function aplatErreurs(err: z.ZodError): Record<string, string> {
@@ -117,6 +126,101 @@ export async function validerCaisse(caisseId: string): Promise<EtatActionCaisse>
 
   revalider(fiche.magasinId);
   return { ok: true, erreur: null, caisseId };
+}
+
+// ─── VALIDER EN MASSE ───────────────────────────────────────────────────
+
+/**
+ * Valide d'un coup toutes les fiches caisse SOUMIS visibles dans le périmètre
+ * de l'utilisateur. Un non-admin ne peut pas valider ses propres saisies :
+ * elles sont ignorées et comptées séparément.
+ */
+export async function validerToutesCaissesEnAttente(): Promise<EtatActionBulkCaisse> {
+  const session = await exigerAuth();
+  const role = session.user.role as RoleApp | undefined;
+  if (!permissions.validerStock(role)) {
+    return { ok: false, erreur: "Permission de validation requise." };
+  }
+
+  const portee = filtreMagasinPourUtilisateur({
+    role,
+    magasinId: session.user.magasinId ?? null,
+    regionId: session.user.regionId ?? null,
+  });
+  if (portee === null) {
+    return { ok: false, erreur: "Aucun magasin accessible avec votre rôle." };
+  }
+
+  // Construit le filtre Caisse correspondant à la portée magasin
+  const wherePortee: Record<string, unknown> = {};
+  if (portee.id) wherePortee.magasinId = portee.id;
+  if (portee.regionId) wherePortee.magasin = { regionId: portee.regionId };
+
+  // Lecture des candidates (séparation des rôles : exclut les saisies de
+  // l'utilisateur courant si ce n'est pas un admin)
+  const whereCandidates: Record<string, unknown> = {
+    ...wherePortee,
+    statut: "SOUMIS",
+  };
+  if (role !== "ADMIN") {
+    whereCandidates.saisiParId = { not: session.user.id };
+  }
+
+  const candidates = await prisma.caisse.findMany({
+    where: whereCandidates,
+    select: { id: true, magasinId: true },
+  });
+
+  // Compte des "ignorées" pour information (non-admin uniquement)
+  let nbIgnorees = 0;
+  if (role !== "ADMIN") {
+    nbIgnorees = await prisma.caisse.count({
+      where: { ...wherePortee, statut: "SOUMIS", saisiParId: session.user.id },
+    });
+  }
+
+  if (candidates.length === 0) {
+    return {
+      ok: true,
+      erreur: null,
+      nbValidees: 0,
+      nbIgnorees,
+    };
+  }
+
+  const ids = candidates.map((c) => c.id);
+
+  // Transaction unique : UPDATE en masse + un audit log par fiche
+  const auditRows = candidates.map((c) => ({
+    userId: session.user.id,
+    action: "VALIDATION" as const,
+    entite: "Caisse",
+    entiteId: c.id,
+  }));
+
+  const [updateResult] = await prisma.$transaction([
+    prisma.caisse.updateMany({
+      where: { id: { in: ids }, statut: "SOUMIS" },
+      data: {
+        statut: "VALIDE",
+        valideParId: session.user.id,
+        valideLe: new Date(),
+        motifRejet: null,
+      },
+    }),
+    prisma.auditLog.createMany({ data: auditRows }),
+  ]);
+
+  // Revalidation : on dédoublonne les magasins concernés
+  const magasinsAffectes = [...new Set(candidates.map((c) => c.magasinId))];
+  for (const m of magasinsAffectes) revalider(m);
+
+  return {
+    ok: true,
+    erreur: null,
+    nbValidees: updateResult.count,
+    nbIgnorees,
+  };
 }
 
 // ─── REJETER ────────────────────────────────────────────────────────────
